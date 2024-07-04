@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استمارة حجز موعد - مصلحة الهجرة والجوازات والجنسية فرع تعز</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            width: 120px;
+            height: auto;
+        }
+        h1 {
+            font-size: 28px;
+            color: #004080;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        label {
+            color: #004080;
+        }
+        .form-control {
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            background-color: #004080;
+            border-color: #004080;
+        }
+        .btn-primary:hover {
+            background-color: #003060;
+            border-color: #003060;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+        .d-none {
+            display: none;
+        }
+        .icon {
+            margin-right: 10px;
+        }
+        .news-ticker {
+            background-color: #004080;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .news-ticker span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 10s linear infinite;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #004080;
+            color: white;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <header class="py-3 bg-dark text-white">
+        <div class="container">
+            <img src="logo.png" alt="شعار المصلحة" class="logo mb-3">
+            <h1>مصلحة الهجرة والجوازات والجنسية فرع تعز</h1>
+            <h2>خدمة حجز موعد للحصول على جواز سفر</h2>
+        </div>
+    </header>
+    <div class="container">
+        <div class="news-ticker">
+            <span>مرحبًا بكم في موقع مصلحة الهجرة والجوازات والجنسية - فرع تعز. يرجى التأكد من إدخال جميع البيانات بشكل صحيح.</span>
+        </div>
+        <form id="appointmentForm">
+            <div class="form-group">
+                <label for="fullname"><i class="fas fa-user icon"></i>الاسم الكامل:</label>
+                <input type="text" class="form-control" id="fullname" name="fullname" required>
+            </div>
+            <div class="form-group">
+                <label for="phone"><i class="fas fa-phone icon"></i>رقم الهاتف:</label>
+                <input type="tel" class="form-control" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="id_type"><i class="fas fa-id-card icon"></i>نوع الهوية:</label>
+                <select class="form-control" id="id_type" name="id_type" required>
+                    <option value="personal_id">بطاقة شخصية</option>
+                    <option value="birth_certificate">شهادة ميلاد</option>
+                    <option value="passport">جواز سفر</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_number"><i class="fas fa-hashtag icon"></i>رقم الهوية:</label>
+                <input type="text" class="form-control" id="id_number" name="id_number" required>
+            </div>
+            <div class="form-group">
+                <label for="city"><i class="fas fa-city icon"></i>المدينة:</label>
+                <input type="text" class="form-control" id="city" name="city" required>
+            </div>
+            <div class="form-group">
+                <label for="street"><i class="fas fa-road icon"></i>الشارع:</label>
+                <input type="text" class="form-control" id="street" name="street" required>
+            </div>
+            <div class="form-group">
+                <label for="birthdate"><i class="fas fa-calendar-alt icon"></i>تاريخ الميلاد:</label>
+                <input type="date" class="form-control" id="birthdate" name="birthdate" required>
+            </div>
+            <div class="form-group">
+                <label for="appointment_time"><i class="fas fa-clock icon"></i>تحديد وقت الموعد:</label>
+                <input type="datetime-local" class="form-control" id="appointment_time" name="appointment_time" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-calendar-check icon"></i>حجز الموعد</button>
+        </form>
+        <div id="alert" class="alert d-none" role="alert"></div>
+        <button id="printButton" class="btn btn-secondary btn-block d-none" onclick="printForm()"><i class="fas fa-print icon"></i>طباعة الاستمارة</button>
+    </div>
+    <footer>
+        <div class="container">
+            <p>© 2024 مصلحة الهجرة والجوازات والجنسية فرع تعز. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAatuXY7VPtB39zcN3L-z2jfHBX6NTfqoA",
+            authDomain: "temu-yemen.firebaseapp.com",
+            projectId: "temu-yemen",
+            storageBucket: "temu-yemen.appspot.com",
+            messagingSenderId: "687344852319",
+            appId: "1:687344852319:web:dc5f95ce4dd7572ef96aea",
+            measurementId: "G-NLSSTZM62R"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Get form values
+            const fullname = document.getElementById('fullname').value;
+            const phone = document.getElementById('phone').value;
+            const id_type = document.getElementById('id_type').value;
+            const id_number = document.getElementById('id_number').value;
+            const city = document.getElementById('city').value;
+            const street = document.getElementById('street').value;
+            const birthdate = document.getElementById('birthdate').value;
+            const appointment_time = document.getElementById('appointment_time').value;
+
+            // Add a new document with a generated ID
+            db.collection("appointments").add({
+                fullname: fullname,
+                phone: phone,
+                id_type: id_type,
+                id_number: id_number,
+                city: city,
+                street: street,
+                birthdate: birthdate,
+                appointment_time: appointment_time
+            })
+            .then((docRef) => {
+                const alertDiv = document.getElementById('alert');
+                alertDiv.textContent = "تم حجز الموعد بنجاح!";
+                alertDiv.classList.remove('d-none');
+                alertDiv.classList.add('alert-success');
+                document.getElementById('appointmentForm').reset();
+                document.getElementById('printButton').classList.remove('d-none');
+            })
+            .catch((error) => {
+                const alertDiv = document.getElementById('alert');
+                alertDiv.textContent = "حدث خطأ أثناء حجز الموعد. حاول مرة أخرى.";
+                alertDiv.classList.remove('d-none');
+                alertDiv.classList.add('alert-danger');
+                console.error("Error adding document: ", error);
+            });
+        });
+
+        function printForm() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
