@@ -1,3 +1,22 @@
+
+/ip firewall mangle
+add action=add-src-to-address-list address-list=80hack address-list-timeout=\
+    30s chain=prerouting connection-limit=16,32 dst-address=192.168.8.1 \
+    dst-port=80 in-interface-list=LAN protocol=tcp src-address-list=!80hack
+
+/ip firewall raw
+add action=drop chain=prerouting dst-address=192.168.8.1 dst-port=80 \
+    in-interface-list=LAN protocol=tcp src-address-list=80hack
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="ar">
 <head>
