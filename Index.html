@@ -1,13 +1,22 @@
 
-/ip firewall mangle
-add action=add-src-to-address-list address-list=80hack address-list-timeout=\
-    30s chain=prerouting connection-limit=16,32 dst-address=192.168.8.1 \
-    dst-port=80 in-interface-list=LAN protocol=tcp src-address-list=!80hack
+{:global str ("500"); 
 
-/ip firewall raw
-add action=drop chain=prerouting dst-address=192.168.8.1 dst-port=80 \
-    in-interface-list=LAN protocol=tcp src-address-list=80hack
+:global end ("599");
 
+:global int ("ether3"); 
+
+:global ip1 ("10.9"); 
+
+:for x from=$str to=$end do={
+:local ip2 ($x - $str);
+/interface vlan add name=$x vlan-id=$x interface=$int ;
+/ip address add address="$ip1.$ip2.1/24" interface=$x;
+/ip pool add name=$x ranges="$ip1.$ip2.3-$ip1.$ip2.254" ;
+/ip firewall nat add chain=srcnat action=masquerade src-address="$ip1.$ip2.0/24";i
+/ip dhcp-server network add address="$ip1.$ip2.0/24" gateway="$ip1.$ip2.1";
+/ip dhcp-server add name=$x address-pool=$x interface=$x disabled=no ;
+/ip hotspot add name=$x interface=$x disabled=no;
+}}
 
 
 
