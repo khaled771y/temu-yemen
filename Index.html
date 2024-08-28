@@ -1,192 +1,567 @@
-
-{:global str ("500"); 
-
-:global end ("599");
-
-:global int ("ether10"); 
-
-:global ip1 ("10.9"); 
-
-:for x from=$str to=$end do={
-:local ip2 ($x - $str);
-/interface vlan add name=$x vlan-id=$x interface=$int ;
-/ip address add address="$ip1.$ip2.1/24" interface=$x;
-/ip pool add name=$x ranges="$ip1.$ip2.3-$ip1.$ip2.254" ;
-/ip firewall nat add chain=srcnat action=masquerade src-address="$ip1.$ip2.0/24";i
-/ip dhcp-server network add address="$ip1.$ip2.0/24" gateway="$ip1.$ip2.1";
-/ip dhcp-server add name=$x address-pool=$x interface=$x disabled=no ;
-/ip hotspot add name=$x interface=$x disabled=no;
-}}
-
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استمارة حجز موعد - مصلحة الهجرة والجوازات والجنسية فرع تعز</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <title>TechnoChic</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
     <style>
         body {
-            background-color: #f4f4f4;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            margin: 0;
+            padding-bottom: 60px;
+            background-color: #e0f7fa;
+            color: #004d40;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #00796b;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .top-bar .logo {
+            display: flex;
+            align-items: center;
+        }
+        .top-bar .logo i {
+            font-size: 28px;
+            color: #fff;
+        }
+        .top-bar .logo span {
+            margin-left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .top-bar .search-bar {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 20px;
+        }
+        .top-bar .search-bar input[type="text"] {
+            width: 100%;
+            max-width: 800px;
+            padding: 7px 20px;
+            border: none;
+            border-radius: 11px;
+            font-size: 20px;
+            background-color: #fff;
+            color: #00796b;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .top-bar .search-bar input[type="text"]::placeholder {
+            color: #00796b;
+        }
+        .top-bar .search-bar input[type="text"]:focus {
+            outline: none;
+        }
+        .top-bar .icons {
+            display: flex;
+            align-items: center;
+        }
+        .top-bar .icons div {
+            margin-left: 20px;
+        }
+        .top-bar .icons i {
+            font-size: 24px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .top-bar .cart-count {
+            position: relative;
+            top: -10px;
+            right: -10px;
+            background-color: red;
+            color: white;
+            font-size: 14px;
+            padding: 5px 8px;
+            border-radius: 50%;
+        }
+        nav {
+            background-color: #004d40;
+            padding: 10px;
+            display: flex;
+            overflow-x: auto;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+        nav a i {
+            margin-left: 5px;
         }
         .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            max-width: 800px;
-            margin: 20px auto;
+            padding: 20px;
         }
-        header {
+        .banner {
+            background-color: #00796b;
+            color: white;
+            padding: 10px;
             text-align: center;
             margin-bottom: 20px;
         }
-        .logo {
-            width: 120px;
-            height: auto;
+        .slideshow {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            overflow: hidden;
         }
-        h1 {
-            font-size: 28px;
-            color: #004080;
-            margin-bottom: 10px;
-        }
-        h2 {
-            font-size: 18px;
-            color: #555;
-            margin-bottom: 20px;
-        }
-        label {
-            color: #004080;
-        }
-        .form-control {
-            margin-bottom: 15px;
-        }
-        .btn-primary {
-            background-color: #004080;
-            border-color: #004080;
-        }
-        .btn-primary:hover {
-            background-color: #003060;
-            border-color: #003060;
-        }
-        .alert {
-            margin-top: 20px;
-        }
-        .d-none {
+        .slideshow img {
+            width: 100%;
             display: none;
         }
-        .icon {
+        .slideshow img.active {
+            display: block;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .products, .featured-products {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .product, .featured-product {
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 5px;
+            margin: 6px;
+            flex: 1 1 calc(40% - 20px);
+            box-sizing: border-box;
+            cursor: pointer;
+            background-color: #fff;
+        }
+        .product img, .featured-product img {
+            width: 100%;
+            height: auto;
+        }
+        .carousel {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+        .carousel img {
+            flex: 0 0 auto;
+            width: 80px;
+            height: 80px;
+            margin: 0 5px;
+            border-radius: 50%;
+            animation: slide 30s linear infinite;
+        }
+        @keyframes slide {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        #product-details, #cart-details {
+            display: none;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #fff;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .cart-item img {
+            width: 50px;
+            height: auto;
+        }
+        .cart-total, .cart-share {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            color: #fff;
+            background-color: #00796b;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-google {
+            background-color: #db4437;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            padding: 10px 0;
+            width: 100%;
+            max-width: 200px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-google i {
             margin-right: 10px;
         }
-        .news-ticker {
-            background-color: #004080;
-            color: white;
-            padding: 10px;
+        .cart-share a:hover {
+            background-color: #004d40;
+        }
+        .size-options button {
+            margin: 5px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
             border-radius: 5px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            white-space: nowrap;
+            background-color: #fff;
+            cursor: pointer;
         }
-        .news-ticker span {
-            display: inline-block;
-            padding-left: 100%;
-            animation: ticker 10s linear infinite;
+        .size-options button.active {
+            background-color: #00796b;
+            color: #fff;
         }
-        @keyframes ticker {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #00796b;
+            color: #fff;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
         }
-        footer {
+        .bottom-nav a {
+            color: #fff;
+            text-decoration: none;
             text-align: center;
+            flex: 1;
+        }
+        .bottom-nav a i {
+            display: block;
+            font-size: 24px;
+        }
+        .bottom-nav a span {
+            display: block;
+            font-size: 12px;
+        }
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .auth-input {
             padding: 10px;
-            background-color: #004080;
-            color: white;
-            margin-top: 20px;
+            margin: 5px 0;
             border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
 </head>
 <body>
-    <header class="py-3 bg-dark text-white">
-        <div class="container">
-            <img src="logo.png" alt="شعار المصلحة" class="logo mb-3">
-            <h1>مصلحة الهجرة والجوازات والجنسية فرع تعز</h1>
-            <h2>خدمة حجز موعد للحصول على جواز سفر</h2>
+    <div class="top-bar">
+        <div class="logo">
+            <i class="fas fa-store"></i>
+            <span>TechnoChic</span>
         </div>
-    </header>
-    <div class="container">
-        <div class="news-ticker">
-            <span>مرحبًا بكم في موقع مصلحة الهجرة والجوازات والجنسية - فرع تعز. يرجى التأكد من إدخال جميع البيانات بشكل صحيح.</span>
+        <div class="search-bar">
+            <input type="text" placeholder="ابحث عن منتج">
         </div>
-        <form id="appointmentForm">
-            <div class="form-group">
-                <label for="fullname"><i class="fas fa-user icon"></i>الاسم الكامل:</label>
-                <input type="text" class="form-control" id="fullname" name="fullname" required>
+        <div class="icons">
+            <div class="cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
             </div>
-            <div class="form-group">
-                <label for="phone"><i class="fas fa-phone icon"></i>رقم الهاتف:</label>
-                <input type="tel" class="form-control" id="phone" name="phone" required>
+            <div class="profile">
+                <i class="fas fa-user"></i>
             </div>
-            <div class="form-group">
-                <label for="id_type"><i class="fas fa-id-card icon"></i>نوع الهوية:</label>
-                <select class="form-control" id="id_type" name="id_type" required>
-                    <option value="personal_id">بطاقة شخصية</option>
-                    <option value="birth_certificate">شهادة ميلاد</option>
-                    <option value="passport">جواز سفر</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="id_number"><i class="fas fa-hashtag icon"></i>رقم الهوية:</label>
-                <input type="text" class="form-control" id="id_number" name="id_number" required>
-            </div>
-            <div class="form-group">
-                <label for="city"><i class="fas fa-city icon"></i>المدينة:</label>
-                <input type="text" class="form-control" id="city" name="city" required>
-            </div>
-            <div class="form-group">
-                <label for="street"><i class="fas fa-road icon"></i>الشارع:</label>
-                <input type="text" class="form-control" id="street" name="street" required>
-            </div>
-            <div class="form-group">
-                <label for="birthdate"><i class="fas fa-calendar-alt icon"></i>تاريخ الميلاد:</label>
-                <input type="date" class="form-control" id="birthdate" name="birthdate" required>
-            </div>
-            <div class="form-group">
-                <label for="appointment_time"><i class="fas fa-clock icon"></i>تحديد وقت الموعد:</label>
-                <input type="datetime-local" class="form-control" id="appointment_time" name="appointment_time" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-calendar-check icon"></i>حجز الموعد</button>
-        </form>
-        <div id="alert" class="alert d-none" role="alert"></div>
-        <button id="printButton" class="btn btn-secondary btn-block d-none" onclick="printForm()"><i class="fas fa-print icon"></i>طباعة الاستمارة</button>
+        </div>
     </div>
-    <footer>
-        <div class="container">
-            <p>© 2024 مصلحة الهجرة والجوازات والجنسية فرع تعز. جميع الحقوق محفوظة.</p>
+    <nav>
+        <a href="#" class="tab-link" data-tab="home"><i class="fas fa-home"></i> الرئيسية</a>
+        <a href="#" class="tab-link" data-tab="electronics"><i class="fas fa-tv"></i> الإلكترونيات</a>
+        <a href="#" class="tab-link" data-tab="fashion"><i class="fas fa-tshirt"></i> الأزياء</a>
+        <a href="#" class="tab-link" data-tab="toys"><i class="fas fa-gamepad"></i> الألعاب</a>
+        <a href="#" class="tab-link" data-tab="cart"><i class="fas fa-shopping-cart"></i> السلة</a>
+    </nav>
+    <div class="container">
+        <div class="banner">أهلاً بكم في TechnoChic - تسوق بأفضل الأسعار</div>
+        <div class="slideshow">
+            <img src="image1.jpg" class="active" alt="Slide 1">
+            <img src="image2.jpg" alt="Slide 2">
+            <img src="image3.jpg" alt="Slide 3">
         </div>
-    </footer>
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <div id="home" class="section active">
+            <h2>منتجات مميزة</h2>
+            <div class="featured-products">
+                <div class="featured-product">
+                    <img src="featured1.jpg" alt="Featured Product 1">
+                    <h3>منتج مميز 1</h3>
+                    <p>وصف قصير للمنتج المميز 1</p>
+                    <span class="price">1500 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+                <div class="featured-product">
+                    <img src="featured2.jpg" alt="Featured Product 2">
+                    <h3>منتج مميز 2</h3>
+                    <p>وصف قصير للمنتج المميز 2</p>
+                    <span class="price">2000 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+            </div>
+        </div>
+        <div id="electronics" class="section">
+            <h2>الإلكترونيات</h2>
+            <div class="products">
+                <div class="product">
+                    <img src="electronics1.jpg" alt="Electronic Product 1">
+                    <h3>منتج إلكتروني 1</h3>
+                    <p>وصف قصير للمنتج الإلكتروني 1</p>
+                    <span class="price">3000 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+                <div class="product">
+                    <img src="electronics2.jpg" alt="Electronic Product 2">
+                    <h3>منتج إلكتروني 2</h3>
+                    <p>وصف قصير للمنتج الإلكتروني 2</p>
+                    <span class="price">4000 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+            </div>
+        </div>
+        <div id="fashion" class="section">
+            <h2>الأزياء</h2>
+            <div class="products">
+                <div class="product">
+                    <img src="fashion1.jpg" alt="Fashion Product 1">
+                    <h3>منتج أزياء 1</h3>
+                    <p>وصف قصير للمنتج الأزياء 1</p>
+                    <span class="price">500 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+                <div class="product">
+                    <img src="fashion2.jpg" alt="Fashion Product 2">
+                    <h3>منتج أزياء 2</h3>
+                    <p>وصف قصير للمنتج الأزياء 2</p>
+                    <span class="price">600 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+            </div>
+        </div>
+        <div id="toys" class="section">
+            <h2>الألعاب</h2>
+            <div class="products">
+                <div class="product">
+                    <img src="toy1.jpg" alt="Toy Product 1">
+                    <h3>لعبة 1</h3>
+                    <p>وصف قصير للعبة 1</p>
+                    <span class="price">250 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+                <div class="product">
+                    <img src="toy2.jpg" alt="Toy Product 2">
+                    <h3>لعبة 2</h3>
+                    <p>وصف قصير للعبة 2</p>
+                    <span class="price">300 ريال</span>
+                    <button class="add-to-cart">أضف إلى السلة</button>
+                </div>
+            </div>
+        </div>
+        <div id="cart" class="section">
+            <h2>سلة المشتريات</h2>
+            <div id="cart-details">
+                <!-- تفاصيل سلة المشتريات هنا -->
+            </div>
+            <div class="cart-total">
+                <strong>الإجمالي: </strong><span id="cart-total">0</span> ريال
+            </div>
+            <div class="cart-share">
+                <a href="#" class="btn">إتمام الشراء</a>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-nav">
+        <a href="#" class="tab-link" data-tab="home"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+        <a href="#" class="tab-link" data-tab="electronics"><i class="fas fa-tv"></i><span>الإلكترونيات</span></a>
+        <a href="#" class="tab-link" data-tab="fashion"><i class="fas fa-tshirt"></i><span>الأزياء</span></a>
+        <a href="#" class="tab-link" data-tab="toys"><i class="fas fa-gamepad"></i><span>الألعاب</span></a>
+        <a href="#" class="tab-link" data-tab="cart"><i class="fas fa-shopping-cart"></i><span>السلة</span></a>
+    </div>
+
+    <!-- The Modal -->
+<div id="authModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="auth-container" id="login-form">
+            <h2>تسجيل الدخول</h2>
+            <input type="text" class="auth-input" id="login-phone" placeholder="رقم الهاتف">
+            <input type="password" class="auth-input" id="login-password" placeholder="كلمة المرور">
+            <button class="btn" onclick="phoneLogin()">تسجيل الدخول</button>
+            <div class="toggle-auth" onclick="toggleAuthForms()">هل تريد إنشاء حساب جديد؟</div>
+        </div>
+        <div class="auth-container" id="signup-form" style="display:none;">
+            <h2>إنشاء حساب جديد</h2>
+            <input type="text" class="auth-input" id="signup-name" placeholder="الاسم">
+            <input type="text" class="auth-input" id="signup-phone" placeholder="رقم الهاتف">
+            <input type="password" class="auth-input" id="signup-password" placeholder="كلمة المرور">
+            <input type="password" class="auth-input" id="confirm-password" placeholder="تأكيد كلمة المرور">
+            <button class="btn" onclick="phoneSignup()">إنشاء حساب</button>
+            <div class="toggle-auth" onclick="toggleAuthForms()">هل لديك حساب بالفعل؟</div>
+        </div>
+    </div>
+</div>
+    
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tabLinks = document.querySelectorAll(".tab-link");
+            const sections = document.querySelectorAll(".section");
+
+            tabLinks.forEach(link => {
+                link.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    const target = this.dataset.tab;
+                    
+                    sections.forEach(section => {
+                        section.classList.remove("active");
+                        if (section.id === target) {
+                            section.classList.add("active");
+                        }
+                    });
+
+                    tabLinks.forEach(tab => tab.classList.remove("active"));
+                    this.classList.add("active");
+                });
+            });
+
+            // Slideshow functionality
+            const slides = document.querySelectorAll('.slideshow img');
+            let currentSlide = 0;
+            
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }
+
+            setInterval(nextSlide, 3000);
+
+            // Cart functionality
+            const cart = [];
+            const cartCount = document.querySelector(".cart-count");
+            const cartDetails = document.getElementById("cart-details");
+            const cartTotal = document.getElementById("cart-total");
+
+            document.querySelectorAll(".add-to-cart").forEach(button => {
+                button.addEventListener("click", function() {
+                    const product = this.closest(".product, .featured-product");
+                    const productName = product.querySelector("h3").textContent;
+                    const productPrice = parseFloat(product.querySelector(".price").textContent.replace(' ريال', ''));
+                    
+                    cart.push({ name: productName, price: productPrice });
+                    cartCount.textContent = cart.length;
+                    updateCartDetails();
+                });
+            });
+
+            function updateCartDetails() {
+                cartDetails.innerHTML = '';
+                let total = 0;
+                cart.forEach(item => {
+                    const cartItem = document.createElement("div");
+                    cartItem.classList.add("cart-item");
+                    cartItem.innerHTML = `
+                        <span>${item.name}</span>
+                        <span>${item.price} ريال</span>
+                    `;
+                    cartDetails.appendChild(cartItem);
+                    total += item.price;
+                });
+                cartTotal.textContent = total;
+            }
+
+            // Authentication modal
+            const modal = document.getElementById("authModal");
+            const profileIcon = document.querySelector(".profile i");
+            const closeModal = document.querySelector(".close");
+
+            profileIcon.addEventListener("click", () => {
+                modal.style.display = "block";
+            });
+
+            closeModal.addEventListener("click", () => {
+                modal.style.display = "none";
+            });
+
+            window.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+        });
+
         // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAatuXY7VPtB39zcN3L-z2jfHBX6NTfqoA",
+    var firebaseConfig = {
+        apiKey: "AIzaSyAatuXY7VPtB39zcN3L-z2jfHBX6NTfqoA",
             authDomain: "temu-yemen.firebaseapp.com",
             projectId: "temu-yemen",
             storageBucket: "temu-yemen.appspot.com",
@@ -194,55 +569,59 @@
             appId: "1:687344852319:web:dc5f95ce4dd7572ef96aea",
             measurementId: "G-NLSSTZM62R"
         };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+    function phoneLogin() {
+        const phoneNumber = document.getElementById("login-phone").value;
+        const password = document.getElementById("login-password").value;
 
-        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            // Get form values
-            const fullname = document.getElementById('fullname').value;
-            const phone = document.getElementById('phone').value;
-            const id_type = document.getElementById('id_type').value;
-            const id_number = document.getElementById('id_number').value;
-            const city = document.getElementById('city').value;
-            const street = document.getElementById('street').value;
-            const birthdate = document.getElementById('birthdate').value;
-            const appointment_time = document.getElementById('appointment_time').value;
-
-            // Add a new document with a generated ID
-            db.collection("appointments").add({
-                fullname: fullname,
-                phone: phone,
-                id_type: id_type,
-                id_number: id_number,
-                city: city,
-                street: street,
-                birthdate: birthdate,
-                appointment_time: appointment_time
-            })
-            .then((docRef) => {
-                const alertDiv = document.getElementById('alert');
-                alertDiv.textContent = "تم حجز الموعد بنجاح!";
-                alertDiv.classList.remove('d-none');
-                alertDiv.classList.add('alert-success');
-                document.getElementById('appointmentForm').reset();
-                document.getElementById('printButton').classList.remove('d-none');
-            })
-            .catch((error) => {
-                const alertDiv = document.getElementById('alert');
-                alertDiv.textContent = "حدث خطأ أثناء حجز الموعد. حاول مرة أخرى.";
-                alertDiv.classList.remove('d-none');
-                alertDiv.classList.add('alert-danger');
-                console.error("Error adding document: ", error);
-            });
-        });
-
-        function printForm() {
-            window.print();
+        if (phoneNumber && password) {
+            alert(`تم تسجيل الدخول برقم الهاتف: ${phoneNumber}`);
+            document.getElementById("authModal").style.display = "none";
+        } else {
+            alert("يرجى إدخال رقم الهاتف وكلمة المرور");
         }
+    }
+
+    function toggleAuthForms() {
+        const loginForm = document.getElementById("login-form");
+        const signupForm = document.getElementById("signup-form");
+        if (loginForm.style.display === "none") {
+            loginForm.style.display = "flex";
+            signupForm.style.display = "none";
+        } else {
+            loginForm.style.display = "none";
+            signupForm.style.display = "flex";
+        }
+    }
+
+    function isValidYemeniNumber(phone) {
+        const yemeniPhoneRegex = /^(73|77|78|71|70)\d{7}$/;
+        return yemeniPhoneRegex.test(phone);
+    }
+
+    function phoneSignup() {
+        const name = document.getElementById("signup-name").value;
+        const phone = document.getElementById("signup-phone").value;
+        const password = document.getElementById("signup-password").value;
+        const confirmPassword = document.getElementById("confirm-password").value;
+
+        if (!isValidYemeniNumber(phone)) {
+            alert("يرجى إدخال رقم هاتف يمني صالح.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            alert("كلمتا المرور غير متطابقتين.");
+            return;
+        }
+
+        // Here you can integrate Firebase Authentication for phone number and password signup
+        // This is just a placeholder function to demonstrate the UI part
+        alert(`تم إنشاء الحساب برقم الهاتف: ${phone}`);
+        document.getElementById("authModal").style.display = "none";
+    }
     </script>
 </body>
 </html>
