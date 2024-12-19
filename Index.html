@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TechnoChic</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
@@ -279,16 +280,20 @@
             max-width: 300px;
             box-sizing: border-box;
         }
+        .toggle-auth {
+            color: #00796b;
+            cursor: pointer;
+            text-decoration: underline;
+        }
         .modal {
             display: none;
             position: fixed;
-            z-index: 1;
+            z-index: 9999;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgb(0,0,0);
             background-color: rgba(0,0,0,0.4);
             padding-top: 60px;
         }
@@ -298,18 +303,21 @@
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
+            max-width: 400px;
+            position: relative;
         }
         .close {
             color: #aaa;
-            float: right;
+            position: absolute;
+            right: 20px;
+            top: 10px;
             font-size: 28px;
             font-weight: bold;
+            cursor: pointer;
         }
         .close:hover,
         .close:focus {
             color: black;
-            text-decoration: none;
-            cursor: pointer;
         }
     </style>
 </head>
@@ -333,7 +341,7 @@
         </div>
     </div>
     <nav>
-        <a href="#" class="tab-link" data-tab="home"><i class="fas fa-home"></i> الرئيسية</a>
+        <a href="#" class="tab-link active" data-tab="home"><i class="fas fa-home"></i> الرئيسية</a>
         <a href="#" class="tab-link" data-tab="electronics"><i class="fas fa-tv"></i> الإلكترونيات</a>
         <a href="#" class="tab-link" data-tab="fashion"><i class="fas fa-tshirt"></i> الأزياء</a>
         <a href="#" class="tab-link" data-tab="toys"><i class="fas fa-gamepad"></i> الألعاب</a>
@@ -425,13 +433,13 @@
         <div id="cart" class="section">
             <h2>سلة المشتريات</h2>
             <div id="cart-details">
-                <!-- تفاصيل سلة المشتريات هنا -->
+                <!-- تفاصيل سلة المشتريات سيتم توليدها ديناميكياً -->
             </div>
             <div class="cart-total">
                 <strong>الإجمالي: </strong><span id="cart-total">0</span> ريال
             </div>
             <div class="cart-share">
-                <a href="#" class="btn">إتمام الشراء</a>
+                <a href="#" class="btn" id="checkout-btn">إتمام الشراء</a>
             </div>
         </div>
     </div>
@@ -444,29 +452,55 @@
     </div>
 
     <!-- The Modal -->
-<div id="authModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <div class="auth-container" id="login-form">
-            <h2>تسجيل الدخول</h2>
-            <input type="text" class="auth-input" id="login-phone" placeholder="رقم الهاتف">
-            <input type="password" class="auth-input" id="login-password" placeholder="كلمة المرور">
-            <button class="btn" onclick="phoneLogin()">تسجيل الدخول</button>
-            <div class="toggle-auth" onclick="toggleAuthForms()">هل تريد إنشاء حساب جديد؟</div>
-        </div>
-        <div class="auth-container" id="signup-form" style="display:none;">
-            <h2>إنشاء حساب جديد</h2>
-            <input type="text" class="auth-input" id="signup-name" placeholder="الاسم">
-            <input type="text" class="auth-input" id="signup-phone" placeholder="رقم الهاتف">
-            <input type="password" class="auth-input" id="signup-password" placeholder="كلمة المرور">
-            <input type="password" class="auth-input" id="confirm-password" placeholder="تأكيد كلمة المرور">
-            <button class="btn" onclick="phoneSignup()">إنشاء حساب</button>
-            <div class="toggle-auth" onclick="toggleAuthForms()">هل لديك حساب بالفعل؟</div>
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-container" id="login-form">
+                <h2>تسجيل الدخول</h2>
+                <input type="text" class="auth-input" id="login-phone" placeholder="رقم الهاتف">
+                <input type="password" class="auth-input" id="login-password" placeholder="كلمة المرور">
+                <button class="btn" onclick="phoneLogin()">تسجيل الدخول</button>
+                <div class="toggle-auth" onclick="toggleAuthForms()">هل تريد إنشاء حساب جديد؟</div>
+            </div>
+            <div class="auth-container" id="signup-form" style="display:none;">
+                <h2>إنشاء حساب جديد</h2>
+                <input type="text" class="auth-input" id="signup-name" placeholder="الاسم">
+                <input type="text" class="auth-input" id="signup-phone" placeholder="رقم الهاتف">
+                <input type="password" class="auth-input" id="signup-password" placeholder="كلمة المرور">
+                <input type="password" class="auth-input" id="confirm-password" placeholder="تأكيد كلمة المرور">
+                <button class="btn" onclick="phoneSignup()">إنشاء حساب</button>
+                <div class="toggle-auth" onclick="toggleAuthForms()">هل لديك حساب بالفعل؟</div>
+            </div>
         </div>
     </div>
-</div>
     
     <script>
+        // ---------------------------------
+        // Firebase Configuration
+        // ---------------------------------
+        var firebaseConfig = {
+            apiKey: "AIzaSyAatuXY7VPtB39zcN3L-z2jfHBX6NTfqoA",
+            authDomain: "temu-yemen.firebaseapp.com",
+            projectId: "temu-yemen",
+            storageBucket: "temu-yemen.appspot.com",
+            messagingSenderId: "687344852319",
+            appId: "1:687344852319:web:dc5f95ce4dd7572ef96aea",
+            measurementId: "G-NLSSTZM62R"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let userCart = []; // سيتم تخزين منتجات السلة هنا مؤقتاً قبل مزامنتها مع Firestore
+        const cartCount = document.querySelector(".cart-count");
+        const cartDetails = document.getElementById("cart-details");
+        const cartTotal = document.getElementById("cart-total");
+
+        // ---------------------------------
+        // UI and Navigation
+        // ---------------------------------
         document.addEventListener("DOMContentLoaded", function() {
             const tabLinks = document.querySelectorAll(".tab-link");
             const sections = document.querySelectorAll(".section");
@@ -488,64 +522,41 @@
                 });
             });
 
-            // Slideshow functionality
+            // Slideshow
             const slides = document.querySelectorAll('.slideshow img');
             let currentSlide = 0;
-            
             function showSlide(index) {
                 slides.forEach((slide, i) => {
                     slide.classList.toggle('active', i === index);
                 });
             }
-
             function nextSlide() {
                 currentSlide = (currentSlide + 1) % slides.length;
                 showSlide(currentSlide);
             }
-
             setInterval(nextSlide, 3000);
 
-            // Cart functionality
-            const cart = [];
-            const cartCount = document.querySelector(".cart-count");
-            const cartDetails = document.getElementById("cart-details");
-            const cartTotal = document.getElementById("cart-total");
-
+            // Add to cart buttons
             document.querySelectorAll(".add-to-cart").forEach(button => {
-                button.addEventListener("click", function() {
-                    const product = this.closest(".product, .featured-product");
-                    const productName = product.querySelector("h3").textContent;
-                    const productPrice = parseFloat(product.querySelector(".price").textContent.replace(' ريال', ''));
-                    
-                    cart.push({ name: productName, price: productPrice });
-                    cartCount.textContent = cart.length;
-                    updateCartDetails();
-                });
+                button.addEventListener("click", handleAddToCart);
             });
 
-            function updateCartDetails() {
-                cartDetails.innerHTML = '';
-                let total = 0;
-                cart.forEach(item => {
-                    const cartItem = document.createElement("div");
-                    cartItem.classList.add("cart-item");
-                    cartItem.innerHTML = `
-                        <span>${item.name}</span>
-                        <span>${item.price} ريال</span>
-                    `;
-                    cartDetails.appendChild(cartItem);
-                    total += item.price;
-                });
-                cartTotal.textContent = total;
-            }
-
-            // Authentication modal
+            // Auth modal
             const modal = document.getElementById("authModal");
             const profileIcon = document.querySelector(".profile i");
             const closeModal = document.querySelector(".close");
 
             profileIcon.addEventListener("click", () => {
-                modal.style.display = "block";
+                // إذا كان المستخدم مسجّل الدخول بالفعل، يمكن عرض نافذة لإدارة الحساب أو تسجيل الخروج
+                // هنا سنكتفي بإظهار المودال فقط في حال عدم تسجيل الدخول
+                if (!currentUser) {
+                    modal.style.display = "block";
+                } else {
+                    // يمكن إضافة زر تسجيل خروج
+                    if(confirm("هل تريد تسجيل الخروج؟")) {
+                        auth.signOut();
+                    }
+                }
             });
 
             closeModal.addEventListener("click", () => {
@@ -557,71 +568,163 @@
                     modal.style.display = "none";
                 }
             });
+
+            // زر الإتمام (يمكن توسعته لاحقا)
+            const checkoutBtn = document.getElementById("checkout-btn");
+            checkoutBtn.addEventListener("click", () => {
+                if (!currentUser) {
+                    alert("يرجى تسجيل الدخول لإتمام الشراء");
+                    document.getElementById("authModal").style.display = "block";
+                } else {
+                    alert("سيتم توجيهك لبوابة الدفع (تجريبي)...");
+                    // هنا يمكن تكامل بوابات الدفع
+                }
+            });
         });
 
-        // Firebase configuration
-    var firebaseConfig = {
-        apiKey: "AIzaSyAatuXY7VPtB39zcN3L-z2jfHBX6NTfqoA",
-            authDomain: "temu-yemen.firebaseapp.com",
-            projectId: "temu-yemen",
-            storageBucket: "temu-yemen.appspot.com",
-            messagingSenderId: "687344852319",
-            appId: "1:687344852319:web:dc5f95ce4dd7572ef96aea",
-            measurementId: "G-NLSSTZM62R"
-        };
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+        // ---------------------------------
+        // Auth State Listener
+        // ---------------------------------
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if (user) {
+                // عند تسجيل الدخول: اجلب السلة من Firestore
+                await loadUserCart(user.uid);
+            } else {
+                // عند تسجيل الخروج: أفرغ السلة (محلياً)
+                userCart = [];
+                updateCartUI();
+            }
+        });
 
-    function phoneLogin() {
-        const phoneNumber = document.getElementById("login-phone").value;
-        const password = document.getElementById("login-password").value;
+        // ---------------------------------
+        // Cart Functions
+        // ---------------------------------
+        async function handleAddToCart(e) {
+            const product = e.target.closest(".product, .featured-product");
+            const productName = product.querySelector("h3").textContent;
+            const productPrice = parseFloat(product.querySelector(".price").textContent.replace(' ريال', ''));
 
-        if (phoneNumber && password) {
-            alert(`تم تسجيل الدخول برقم الهاتف: ${phoneNumber}`);
-            document.getElementById("authModal").style.display = "none";
-        } else {
-            alert("يرجى إدخال رقم الهاتف وكلمة المرور");
-        }
-    }
+            // تحقّق من تسجيل الدخول
+            if (!currentUser) {
+                // عرض نافذة التسجيل
+                document.getElementById("authModal").style.display = "block";
+                return;
+            }
 
-    function toggleAuthForms() {
-        const loginForm = document.getElementById("login-form");
-        const signupForm = document.getElementById("signup-form");
-        if (loginForm.style.display === "none") {
-            loginForm.style.display = "flex";
-            signupForm.style.display = "none";
-        } else {
-            loginForm.style.display = "none";
-            signupForm.style.display = "flex";
-        }
-    }
-
-    function isValidYemeniNumber(phone) {
-        const yemeniPhoneRegex = /^(73|77|78|71|70)\d{7}$/;
-        return yemeniPhoneRegex.test(phone);
-    }
-
-    function phoneSignup() {
-        const name = document.getElementById("signup-name").value;
-        const phone = document.getElementById("signup-phone").value;
-        const password = document.getElementById("signup-password").value;
-        const confirmPassword = document.getElementById("confirm-password").value;
-
-        if (!isValidYemeniNumber(phone)) {
-            alert("يرجى إدخال رقم هاتف يمني صالح.");
-            return;
+            // إضافة المنتج للسلة
+            userCart.push({ name: productName, price: productPrice });
+            await saveUserCart(currentUser.uid, userCart);
+            updateCartUI();
         }
 
-        if (password !== confirmPassword) {
-            alert("كلمتا المرور غير متطابقتين.");
-            return;
+        function updateCartUI() {
+            cartDetails.innerHTML = '';
+            let total = 0;
+            userCart.forEach(item => {
+                const cartItem = document.createElement("div");
+                cartItem.classList.add("cart-item");
+                cartItem.innerHTML = `
+                    <span>${item.name}</span>
+                    <span>${item.price} ريال</span>
+                `;
+                cartDetails.appendChild(cartItem);
+                total += item.price;
+            });
+            cartTotal.textContent = total;
+            cartCount.textContent = userCart.length;
+            cartDetails.style.display = userCart.length > 0 ? "block" : "none";
         }
 
-        // Here you can integrate Firebase Authentication for phone number and password signup
-        // This is just a placeholder function to demonstrate the UI part
-        alert(`تم إنشاء الحساب برقم الهاتف: ${phone}`);
-        document.getElementById("authModal").style.display = "none";
-    }
+        // ---------------------------------
+        // Firestore - Cart Storage
+        // ---------------------------------
+        async function loadUserCart(uid) {
+            const docRef = db.collection("carts").doc(uid);
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                userCart = docSnap.data().items || [];
+            } else {
+                userCart = [];
+            }
+            updateCartUI();
+        }
+
+        async function saveUserCart(uid, items) {
+            const docRef = db.collection("carts").doc(uid);
+            await docRef.set({ items: items }, { merge: true });
+        }
+
+        // ---------------------------------
+        // Authentication Functions
+        // ---------------------------------
+        function phoneLogin() {
+            const phoneNumber = document.getElementById("login-phone").value;
+            const password = document.getElementById("login-password").value;
+
+            if (phoneNumber && password) {
+                // TODO: هنا يجب أن تستخدم أسلوب مناسب لتسجيل الدخول عبر رقم هاتف (إذا كنت تريد OTP أو SMS)
+                // حاليًا مثال افتراضي للتجربة:
+                // هذه طريقة وهمية، يجب ربطها بخدمة Auth واقعية (Email/Password أو Phone Auth مع OTP)
+                // سنستخدم email/password كنموذج تجريبي باستخدام رقم الهاتف كإيميل (فقط للتجربة)
+                const email = phoneNumber + "@example.com"; 
+                auth.signInWithEmailAndPassword(email, password)
+                    .then(() => {
+                        document.getElementById("authModal").style.display = "none";
+                    })
+                    .catch((error) => {
+                        alert("خطأ في تسجيل الدخول: " + error.message);
+                    });
+            } else {
+                alert("يرجى إدخال رقم الهاتف وكلمة المرور");
+            }
+        }
+
+        function toggleAuthForms() {
+            const loginForm = document.getElementById("login-form");
+            const signupForm = document.getElementById("signup-form");
+            if (loginForm.style.display === "none") {
+                loginForm.style.display = "flex";
+                signupForm.style.display = "none";
+            } else {
+                loginForm.style.display = "none";
+                signupForm.style.display = "flex";
+            }
+        }
+
+        function isValidYemeniNumber(phone) {
+            const yemeniPhoneRegex = /^(73|77|78|71|70)\d{7}$/;
+            return yemeniPhoneRegex.test(phone);
+        }
+
+        function phoneSignup() {
+            const name = document.getElementById("signup-name").value;
+            const phone = document.getElementById("signup-phone").value;
+            const password = document.getElementById("signup-password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
+
+            if (!isValidYemeniNumber(phone)) {
+                alert("يرجى إدخال رقم هاتف يمني صالح.");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert("كلمتا المرور غير متطابقتين.");
+                return;
+            }
+
+            // كما هو الحال في login، سنستخدم Email/Password كمحاكاة.
+            // في الواقع يجب استخدام Phone Auth مع Firebase.
+            const email = phone + "@example.com"; 
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert(`تم إنشاء الحساب برقم الهاتف: ${phone}`);
+                    document.getElementById("authModal").style.display = "none";
+                })
+                .catch((error) => {
+                    alert("خطأ في إنشاء الحساب: " + error.message);
+                });
+        }
     </script>
 </body>
 </html>
